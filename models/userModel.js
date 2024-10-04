@@ -1,16 +1,24 @@
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid'); // Importa uuid para generar IDs únicos
+const { v4: uuidv4 } = require('uuid');
+
+// Función para generar una API key segura para URLs
+function generateApiKey() {
+    const apiKey = uuidv4(); // Genera un UUID
+    const base64ApiKey = Buffer.from(apiKey).toString('base64'); // Convierte a base64
+    const safeApiKey = base64ApiKey.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // Base64 URL seguro
+    return safeApiKey;
+}
 
 let users = [
     {
         username: 'admin',
         password: bcrypt.hashSync('12345', 10), // Contraseña encriptada
-        apiKey: bcrypt.hashSync(uuidv4(), 10) // Genera y encripta una API key
+        apiKey: generateApiKey() // Genera una API key segura
     },
     {
         username: 'user',
         password: bcrypt.hashSync('12345', 10), // Contraseña encriptada
-        apiKey: bcrypt.hashSync(uuidv4(), 10) // Genera y encripta una API key
+        apiKey: generateApiKey() // Genera una API key segura
     }
 ];
 
@@ -22,14 +30,13 @@ function getUserByApiKey(apiKey) {
     return users.find(user => user.apiKey === apiKey);
 }
 
-
 function createUser(username, password) {
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const newApiKey = bcrypt.hashSync(uuidv4(), 10); // Genera y encripta la API key
+    const newApiKey = generateApiKey(); // Genera una API key segura
     const newUser = {
         username,
         password: hashedPassword,
-        apiKey: newApiKey // Almacena la API key encriptada
+        apiKey: newApiKey // Almacena la API key segura
     };
     users.push(newUser);
     return newUser;
@@ -40,3 +47,4 @@ module.exports = {
     createUser,
     getUserByApiKey
 };
+
