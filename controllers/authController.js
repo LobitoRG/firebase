@@ -38,23 +38,32 @@ async function createUser(req, res) {
         return res.status(400).json({ code: 400, message: 'Faltan datos necesarios' });
     }
 
-    const existingUser = userModel.getUserByUsername(username);
-    if (existingUser) {
-        return res.status(409).json({ code: 409, message: 'El usuario ya existe' });
+    try {
+        // Crear usuario con Firebase Authentication
+        const userCredential = await auth.createUserWithEmailAndPassword(username, password);
+        const userId = userCredential.user.uid;
+        
+        // Encriptar la contraseña antes de guardarla
+        const hashedPassword = bcrypt.hashSync(password, 10);
+        
+        // Guardar detalles del usuario en Firestore
+        await db.collection('users').doc(userId).set({
+            username: username,
+            password: hashedPassword,
+            apiKey: generateApiKey()
+        });
+
+        return res.status(201).json({
+            code: 201,
+            message: 'Usuario creado exitosamente',
+            user: {
+                username: username
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ code: 500, message: error.message });
     }
-
-    const newUser = userModel.createUser(username, password);
-
-    return res.status(201).json({
-        code: 201,
-        message: 'Usuario creado exitosamente',
-        user: {
-            username: newUser.username,
-            apiKey: newUser.apiKey // Devolver la API key encriptada
-        }
-    });
 }
-
 async function getUserByApiKey(req, res) {
     const { apiKey } = req.params;
     
