@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const JWT_SECRET = 'claveSecreta';
 const JWT_EXPIRES_IN = '5m';
+const { auth, db } = require('../config/firebaseConfig');
+
 
 async function login(req, res) {
     const { username, password } = req.body;
